@@ -476,9 +476,14 @@ module ActiveRecord
         # Convert sql to sobject
         table_name, columns, entity_def = lookup(sql.match(/UPDATE\s+(\w+)\s+/mi)[1])
         columns = entity_def.column_name_to_column
-
         match = sql.match(/SET\s+(.+)\s+WHERE/mi)[1]
-        names = match.scan(/(\w+)\s*=\s*(?:'|NULL|TRUE|FALSE)/mi).flatten
+		
+		# Be sure to only check outside of the quotes for column names
+        vals = match.scan(/(\w+)\s*=\s*('((\\')|[^'(\\')])+'|NULL|TRUE|FALSE)/mi).flatten
+        names = Array.new
+        vals.each_with_index do |obj, i|
+          names << obj if i%4 == 0
+        end
 
         values = match.scan(/=\s*(NULL|TRUE|FALSE|'(?:(?:[^']|'')*)'),*/mi).flatten
         values.map! { |v| v.first == "'" ? v.slice(1, v.length - 2) : v == "NULL" ? nil : v }
